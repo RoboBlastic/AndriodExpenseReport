@@ -6,8 +6,10 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import './add_expense_screen.dart';
+import './expense_chart.dart';
 import './expense_provider.dart';
 import './theme_provider.dart';
+import './expense.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,10 +83,34 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  DateTimeRange? _selectedDateRange;
+  bool _isChartVisible = false;
+
   @override
   void initState() {
     super.initState();
     Provider.of<ExpenseProvider>(context, listen: false).fetchExpenses();
+  }
+
+  Future<void> _selectDateRange() async {
+    final initialDateRange = DateTimeRange(
+      start: DateTime.now().subtract(const Duration(days: 7)),
+      end: DateTime.now(),
+    );
+    final newDateRange = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+      initialDateRange: _selectedDateRange ?? initialDateRange,
+    );
+
+    if (newDateRange != null) {
+      setState(() {
+        _selectedDateRange = newDateRange;
+      });
+      Provider.of<ExpenseProvider>(context, listen: false)
+          .filterExpensesByDate(_selectedDateRange!);
+    }
   }
 
   IconData _getCategoryIcon(String category) {
@@ -115,6 +141,20 @@ class _MyHomePageState extends State<MyHomePage> {
         title: const Text('Expense Tracker'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: _selectDateRange,
+            tooltip: 'Filter by Date',
+          ),
+          IconButton(
+            icon: Icon(_isChartVisible ? Icons.pie_chart : Icons.pie_chart_outline),
+            onPressed: () {
+              setState(() {
+                _isChartVisible = !_isChartVisible;
+              });
+            },
+            tooltip: _isChartVisible ? 'Hide Chart' : 'Show Chart',
+          ),
+          IconButton(
             icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => themeProvider.toggleTheme(),
             tooltip: 'Toggle Theme',
@@ -125,6 +165,8 @@ class _MyHomePageState extends State<MyHomePage> {
         builder: (context, expenseProvider, child) {
           return Column(
             children: [
+              if (_isChartVisible && expenseProvider.expenses.isNotEmpty)
+                const ExpenseChart(),
               Expanded(
                 child: expenseProvider.expenses.isEmpty
                     ? Center(
@@ -188,6 +230,16 @@ class _MyHomePageState extends State<MyHomePage> {
                                         fontWeight: FontWeight.bold,
                                         color: Theme.of(context).colorScheme.primary,
                                       ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.primary),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => AddExpenseScreen(expense: expense),
+                                        ),
+                                      );
+                                    },
                                   ),
                                   IconButton(
                                     icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),

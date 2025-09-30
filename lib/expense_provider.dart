@@ -4,6 +4,7 @@ import './expense.dart';
 
 class ExpenseProvider with ChangeNotifier {
   List<Expense> _expenses = [];
+  List<Expense> _originalExpenses = [];
 
   List<Expense> get expenses => _expenses;
 
@@ -22,6 +23,18 @@ class ExpenseProvider with ChangeNotifier {
     fetchExpenses();
   }
 
+    Future<void> updateExpense(Expense expense) async {
+    final updatedExpense = {
+      'id': expense.id,
+      'title': expense.title,
+      'amount': expense.amount,
+      'date': expense.date.toIso8601String(),
+      'category': expense.category,
+    };
+    await DatabaseHelper.instance.update(updatedExpense);
+    fetchExpenses();
+  }
+
   Future<void> fetchExpenses() async {
     final data = await DatabaseHelper.instance.queryAllRows();
     _expenses = data.map((item) {
@@ -32,6 +45,15 @@ class ExpenseProvider with ChangeNotifier {
         date: DateTime.parse(item['date']),
         category: item['category'] ?? 'Other', // Default category if not found
       );
+    }).toList();
+    _originalExpenses = _expenses;
+    notifyListeners();
+  }
+
+  void filterExpensesByDate(DateTimeRange dateRange) {
+    _expenses = _originalExpenses.where((expense) {
+      return expense.date.isAfter(dateRange.start) &&
+          expense.date.isBefore(dateRange.end.add(const Duration(days: 1)));
     }).toList();
     notifyListeners();
   }

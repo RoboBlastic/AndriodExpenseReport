@@ -51,6 +51,12 @@ class DatabaseHelper {
     return await db.query('expenses', orderBy: 'date DESC');
   }
 
+  Future<int> update(Map<String, dynamic> row) async {
+    Database db = await instance.database;
+    int id = row['id'];
+    return await db.update('expenses', row, where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<int> delete(int id) async {
     Database db = await instance.database;
     return await db.delete('expenses', where: 'id = ?', whereArgs: [id]);

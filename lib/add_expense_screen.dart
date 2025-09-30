@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import './expense.dart';
 import './expense_provider.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  const AddExpenseScreen({super.key});
+  final Expense? expense;
+
+  const AddExpenseScreen({super.key, this.expense});
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -26,10 +29,22 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     'Other',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.expense != null) {
+      final expense = widget.expense!;
+      _titleController.text = expense.title;
+      _amountController.text = expense.amount.toString();
+      _selectedDate = expense.date;
+      _selectedCategory = expense.category;
+    }
+  }
+
   void _presentDatePicker() {
     showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2023),
       lastDate: DateTime.now(),
     ).then((pickedDate) {
@@ -50,12 +65,23 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       return;
     }
 
-    Provider.of<ExpenseProvider>(context, listen: false).addExpense(
-      enteredTitle,
-      enteredAmount,
-      _selectedDate!,
-      _selectedCategory,
-    );
+    if (widget.expense == null) {
+      Provider.of<ExpenseProvider>(context, listen: false).addExpense(
+        enteredTitle,
+        enteredAmount,
+        _selectedDate!,
+        _selectedCategory,
+      );
+    } else {
+      final updatedExpense = Expense(
+        id: widget.expense!.id,
+        title: enteredTitle,
+        amount: enteredAmount,
+        date: _selectedDate!,
+        category: _selectedCategory,
+      );
+      Provider.of<ExpenseProvider>(context, listen: false).updateExpense(updatedExpense);
+    }
 
     Navigator.of(context).pop();
   }
@@ -64,7 +90,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Expense'),
+        title: Text(widget.expense == null ? 'Add New Expense' : 'Edit Expense'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -120,7 +146,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
             ElevatedButton(
               onPressed: _submitData,
-              child: const Text('Add Expense'),
+              child: Text(widget.expense == null ? 'Add Expense' : 'Save Changes'),
             ),
           ],
         ),
