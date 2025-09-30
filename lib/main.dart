@@ -87,6 +87,25 @@ class _MyHomePageState extends State<MyHomePage> {
     Provider.of<ExpenseProvider>(context, listen: false).fetchExpenses();
   }
 
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Food':
+        return Icons.fastfood;
+      case 'Travel':
+        return Icons.flight;
+      case 'Shopping':
+        return Icons.shopping_cart;
+      case 'Bills':
+        return Icons.receipt;
+      case 'Health':
+        return Icons.healing;
+      case 'Entertainment':
+        return Icons.movie;
+      default:
+        return Icons.category;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -147,7 +166,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 radius: 30,
                                 backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                                 child: Icon(
-                                  Icons.monetization_on_outlined,
+                                  _getCategoryIcon(expense.category),
                                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                                   size: 30,
                                 ),
@@ -157,7 +176,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 style: Theme.of(context).textTheme.titleLarge,
                               ),
                               subtitle: Text(
-                                DateFormat.yMMMd().format(expense.date),
+                                '${expense.category} | ${DateFormat.yMMMd().format(expense.date)}',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                               trailing: Row(

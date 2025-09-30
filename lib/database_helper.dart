@@ -17,8 +17,9 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'expenses.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2, // Incremented version to trigger an upgrade
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -28,9 +29,16 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         amount REAL,
-        date TEXT
+        date TEXT,
+        category TEXT
       )
     ''');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE expenses ADD COLUMN category TEXT');
+    }
   }
 
   Future<int> insert(Map<String, dynamic> row) async {

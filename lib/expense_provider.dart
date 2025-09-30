@@ -11,11 +11,12 @@ class ExpenseProvider with ChangeNotifier {
     return _expenses.fold(0.0, (sum, item) => sum + item.amount);
   }
 
-  Future<void> addExpense(String title, double amount, DateTime date) async {
+  Future<void> addExpense(String title, double amount, DateTime date, String category) async {
     final newExpense = {
       'title': title,
       'amount': amount,
       'date': date.toIso8601String(),
+      'category': category,
     };
     await DatabaseHelper.instance.insert(newExpense);
     fetchExpenses();
@@ -29,6 +30,7 @@ class ExpenseProvider with ChangeNotifier {
         title: item['title'],
         amount: item['amount'],
         date: DateTime.parse(item['date']),
+        category: item['category'] ?? 'Other', // Default category if not found
       );
     }).toList();
     notifyListeners();

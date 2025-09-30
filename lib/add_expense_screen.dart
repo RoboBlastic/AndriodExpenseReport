@@ -14,6 +14,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime? _selectedDate;
+  String _selectedCategory = 'Food';
+
+  final _categories = [
+    'Food',
+    'Travel',
+    'Shopping',
+    'Bills',
+    'Health',
+    'Entertainment',
+    'Other',
+  ];
 
   void _presentDatePicker() {
     showDatePicker(
@@ -43,6 +54,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       enteredTitle,
       enteredAmount,
       _selectedDate!,
+      _selectedCategory,
     );
 
     Navigator.of(context).pop();
@@ -67,6 +79,23 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               controller: _amountController,
               decoration: const InputDecoration(labelText: 'Amount', prefixText: '₹'),
               keyboardType: TextInputType.number,
+            ),
+            DropdownButtonFormField(
+              initialValue: _selectedCategory,
+              items: _categories.map((String category) {
+                return DropdownMenuItem(
+                  value: category,
+                  child: Text(category),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedCategory = newValue.toString();
+                });
+              },
+              decoration: const InputDecoration(
+                labelText: 'Category',
+              ),
             ),
             SizedBox(
               height: 70,
