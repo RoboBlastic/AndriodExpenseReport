@@ -183,7 +183,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         },
                       ),
               ),
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: Card(
                   elevation: 8,
@@ -224,8 +224,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           );
         },
-        child: const Icon(Icons.add),
         elevation: 4.0,
+        child: const Icon(Icons.add),
       ),
     );
   }
