@@ -7,20 +7,22 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import './add_expense_screen.dart';
 import './expense_provider.dart';
+import './theme_provider.dart';
 
 void main() async {
-  // Required for platform-specific code before runApp()
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize FFI for desktop platforms
   if (!kIsWeb && (Platform.isLinux || Platform.isMacOS || Platform.isWindows)) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ExpenseProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ExpenseProvider()),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -31,12 +33,42 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Expense Tracker',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    const Color primarySeedColor = Colors.blue;
+
+    final ThemeData lightTheme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primarySeedColor,
+        brightness: Brightness.light,
       ),
-      home: const MyHomePage(),
+      appBarTheme: AppBarTheme(
+        backgroundColor: primarySeedColor,
+        foregroundColor: Colors.white,
+      ),
+    );
+
+    final ThemeData darkTheme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primarySeedColor,
+        brightness: Brightness.dark,
+      ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.grey[900],
+        foregroundColor: Colors.white,
+      ),
+    );
+
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Expense Tracker',
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: themeProvider.themeMode,
+          home: const MyHomePage(),
+        );
+      },
     );
   }
 }
@@ -57,9 +89,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Expense Tracker'),
+        actions: [
+          IconButton(
+            icon: Icon(themeProvider.themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () => themeProvider.toggleTheme(),
+            tooltip: 'Toggle Theme',
+          ),
+        ],
       ),
       body: Consumer<ExpenseProvider>(
         builder: (context, expenseProvider, child) {
@@ -67,24 +108,70 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               Expanded(
                 child: expenseProvider.expenses.isEmpty
-                    ? const Center(
-                        child: Text('No expenses added yet.'),
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.receipt_long,
+                              size: 80,
+                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              'No expenses yet!',
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                             const SizedBox(height: 10),
+                            Text(
+                              'Tap the "+" button to add your first expense.',
+                               style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ],
+                        ),
                       )
                     : ListView.builder(
+                        padding: const EdgeInsets.all(8.0),
                         itemCount: expenseProvider.expenses.length,
                         itemBuilder: (context, index) {
                           final expense = expenseProvider.expenses[index];
-                          return ListTile(
-                            title: Text(expense.title),
-                            subtitle: Text(DateFormat.yMMMd().format(expense.date)),
-                            trailing: SizedBox(
-                              width: 100,
-                              child: Row(
+                          return Card(
+                            elevation: 4,
+                            margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 5.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                              leading: CircleAvatar(
+                                radius: 30,
+                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                child: Icon(
+                                  Icons.monetization_on_outlined,
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  size: 30,
+                                ),
+                              ),
+                              title: Text(
+                                expense.title,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              subtitle: Text(
+                                DateFormat.yMMMd().format(expense.date),
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                      '₹${expense.amount.toStringAsFixed(2)}'),
+                                    '₹${expense.amount.toStringAsFixed(2)}',
+                                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                  ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete),
+                                    icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
                                     onPressed: () {
                                       expenseProvider.deleteExpense(expense.id!);
                                     },
@@ -96,20 +183,33 @@ class _MyHomePageState extends State<MyHomePage> {
                         },
                       ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total Expense:',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Container(
+                width: double.infinity,
+                child: Card(
+                  elevation: 8,
+                  margin: const EdgeInsets.all(15.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Total Expense:',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '₹${expenseProvider.totalExpense.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '₹${expenseProvider.totalExpense.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -117,14 +217,15 @@ class _MyHomePageState extends State<MyHomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.of(context).push(
+        onPressed: () {
+          Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => const AddExpenseScreen(),
             ),
           );
         },
         child: const Icon(Icons.add),
+        elevation: 4.0,
       ),
     );
   }
