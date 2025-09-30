@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -35,7 +36,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primarySeedColor = Colors.blue;
+    const Color primarySeedColor = Colors.teal;
+
+    final TextTheme appTextTheme = TextTheme(
+      displayLarge: GoogleFonts.oswald(fontSize: 57, fontWeight: FontWeight.bold),
+      titleLarge: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.w500),
+      bodyMedium: GoogleFonts.openSans(fontSize: 14),
+    );
 
     final ThemeData lightTheme = ThemeData(
       useMaterial3: true,
@@ -43,9 +50,20 @@ class MyApp extends StatelessWidget {
         seedColor: primarySeedColor,
         brightness: Brightness.light,
       ),
+      textTheme: appTextTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: primarySeedColor,
         foregroundColor: Colors.white,
+        titleTextStyle: GoogleFonts.oswald(fontSize: 24, fontWeight: FontWeight.bold),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: primarySeedColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
       ),
     );
 
@@ -55,9 +73,20 @@ class MyApp extends StatelessWidget {
         seedColor: primarySeedColor,
         brightness: Brightness.dark,
       ),
+      textTheme: appTextTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.grey[900],
         foregroundColor: Colors.white,
+        titleTextStyle: GoogleFonts.oswald(fontSize: 24, fontWeight: FontWeight.bold),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.black,
+          backgroundColor: Colors.teal.shade200,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
       ),
     );
 
@@ -66,7 +95,17 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'Expense Tracker',
           theme: lightTheme,
-          darkTheme: darkTheme,
+          darkTheme: darkTheme.copyWith(
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: darkTheme.colorScheme.onPrimaryContainer,
+                backgroundColor: darkTheme.colorScheme.primaryContainer,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                textStyle: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ),
           themeMode: themeProvider.themeMode,
           home: const MyHomePage(),
         );
@@ -176,7 +215,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             Icon(
                               Icons.receipt_long,
                               size: 80,
-                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.6),
+                              color: Theme.of(context).colorScheme.secondary.withAlpha(153),
                             ),
                             const SizedBox(height: 20),
                             Text(
